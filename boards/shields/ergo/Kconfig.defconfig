@@ -1,0 +1,22 @@
+# The RIGHT half is the central because it carries the trackpad. ZMK
+# pointing devices must live on the central, so making the trackpad side
+# central avoids the (much fussier) split-peripheral input relay path.
+# The encoder on the LEFT peripheral is forwarded over the split link.
+
+if SHIELD_ERGO_RIGHT
+
+config ZMK_KEYBOARD_NAME
+    # Must be <= 16 characters.
+    default "Ergo"
+
+config ZMK_SPLIT_ROLE_CENTRAL
+    default y
+
+endif
+
+if SHIELD_ERGO_LEFT || SHIELD_ERGO_RIGHT
+
+config ZMK_SPLIT
+    default y
+
+endif

@@ -1,0 +1,42 @@
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/pointing.h> /* &mkp for the trackpad buttons */
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            /*
+             * Bindings follow the combined transform in ergo.dtsi:
+             * first the 25 LEFT positions, then the 36 RIGHT positions.
+             */
+            bindings = <
+                /* ============ LEFT (positions 0..24) ============ */
+                &kp ESC   &kp LALT  &kp W     &kp E     &kp R     &kp T
+                &kp TAB   &kp Q     &kp S     &kp D     &kp F     &kp G
+                &kp LSHFT &kp A     &kp X     &kp C     &kp V     &kp B
+                &kp LCTRL &kp Z     &kp LPAR  &kp COMMA &kp RPAR  &kp SPACE
+                &kp DOT
+
+                /* ============ RIGHT (positions 25..60) ============ */
+                /* Row 0 */
+                &kp Y     &kp U     &kp I     &kp O     &kp DEL   &kp BSPC
+                /* Row 1 */
+                &kp H     &kp J     &kp K     &kp L     &kp P     &kp RSHFT
+                /* Row 2 */
+                &kp N     &kp M     &kp COMMA &kp DOT   &kp SEMI  &kp RET
+                /* Row 3 */
+                &kp SPACE &kp LEFT  &kp UP    &kp RIGHT &kp FSLH  &kp LCTRL
+                /* Row 4 */
+                &none     &none     &none     &kp DOWN  &none     &none
+                /* Row 5 (trackpad buttons) */
+                &mkp MB2  &mkp MB3  &mkp MB1  &none     &none     &none
+            >;
+
+            /* Encoder lives on the left half; events arrive over the split link. */
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+        };
+    };
+};

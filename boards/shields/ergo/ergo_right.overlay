@@ -1,0 +1,94 @@
+/*
+ * RIGHT half = split CENTRAL (it carries the trackpad).
+ * Occupies logical columns 5..10, so the shared transform is shifted by 5.
+ * Because the trackpad is on the central, it is an ordinary local pointing
+ * device: no zmk,input-split / peripheral relay is required.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pinctrl/nrf-pinctrl.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <dt-bindings/zmk/input_transform.h>
+#include "ergo.dtsi"
+
+/* Shift this half into logical columns 5..10. */
+&default_transform {
+    col-offset = <5>;
+};
+
+&i2c0 {
+    mcp23008: mcp23008@20 {
+        compatible = "microchip,mcp23008";
+        status = "okay";
+        reg = <0x20>;
+        gpio-controller;
+        #gpio-cells = <2>;
+    };
+
+    tps43: tps43@74 {
+        compatible = "azoteq,iqs5xx";
+        status = "okay";
+        reg = <0x74>;
+        rdy-gpios = <&gpio0 28 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+        /* reset-gpios intentionally omitted: gpio0 2 is the encoder A pin
+           (encoder is defined in the shared ergo.dtsi). The IQS5xx resets
+           itself on power-up, so an explicit reset line isn't required. */
+        scroll; /* two-finger scroll */
+    };
+};
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+        diode-direction = "col2row";
+        wakeup-source;
+
+        row-gpios
+            = <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 0: D3 */
+            , <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 1: D6 */
+            , <&gpio1 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 2: D8 */
+            , <&gpio1 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 3: D9 */
+            , <&gpio1 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 4: D10 */
+            , <&gpio1 12 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 5: D7 */
+            ;
+
+        col-gpios
+            = <&mcp23008 0 GPIO_ACTIVE_HIGH>
+            , <&mcp23008 1 GPIO_ACTIVE_HIGH>
+            , <&mcp23008 2 GPIO_ACTIVE_HIGH>
+            , <&mcp23008 3 GPIO_ACTIVE_HIGH>
+            , <&mcp23008 4 GPIO_ACTIVE_HIGH>
+            , <&mcp23008 5 GPIO_ACTIVE_HIGH>
+            ;
+    };
+
+    /* Cursor movement transform */
+    trackpad_transform: trackpad_transform {
+        compatible = "zmk,input-processor-transform";
+        #input-processor-cells = <1>;
+        type = <INPUT_EV_REL>;
+        x-codes = <INPUT_REL_X>;
+        y-codes = <INPUT_REL_Y>;
+    };
+
+    /* Dedicated scroll transform */
+    trackpad_scroll_transform: trackpad_scroll_transform {
+        compatible = "zmk,input-processor-transform";
+        #input-processor-cells = <1>;
+        type = <INPUT_EV_REL>;
+        x-codes = <INPUT_REL_HWHEEL>;
+        y-codes = <INPUT_REL_WHEEL>;
+    };
+
+    trackpad_listener {
+        compatible = "zmk,input-listener";
+        device = <&tps43>;
+        input-processors =
+            <&trackpad_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT)>,
+            <&trackpad_scroll_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_Y_INVERT)>;
+    };
+};
